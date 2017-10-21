@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Todolist partagée en temps réel</title>
+        <style>
+            a {text-decoration: none; color: black;}
+        </style>
+    </head>
+
+    <body>
+        <h1>Todolist partagée en temps réel</h1>
+
+        <ul id="todolist">
+        </ul>
+
+        <form action="/" method="post" id="form_new_task">
+            <p>
+                <label for="newtodo">Que dois-je faire ?</label>
+                <input type="text" name="newtodo" id="newtodo" autofocus />
+                <input type="submit" />
+            </p>
+        </form>
+
+        <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+
+            // Connexion à socket.io
+            var socket = io.connect('http://localhost:8080');
+            var todolist = []; // todolist locale
+
+            // Envoie de la connexion au serveur, pour récupérer la todolist
+            socket.emit('new_user');
+
+            // Réception d'une nouvelle todolist, on l'affecte à la todolist locale et on l'affiche
+            socket.on('new_list', function(list) {
+                todolist = list;
+                displayList(todolist);
+            })
+
+            // Gestion d'une nouvelle tache
+            $('#form_new_task').submit(function () {
+                var task = $('#newtodo').val();
+
+                // Envoie de la nouvelle tache au serveur, pour la propager aux autres utilisateurs
+                socket.emit('add_task', task); 
+
+                // Ajout de la tache à la todolist locale et réaffichage de la liste
+                todolist.push(task);
+                displayList(todolist);
+
+                // Blocage du submit
+                return false;
+            });
+            
+            // Afficahe de la todolist et gestion de la suppression des taches
+            function displayList(todolist) {
+
+                // Vidage de la liste
+                $('#todolist').empty();
+
+                // Recréation des éléments de la liste
+                todolist.forEach(function(todo, index) {
+                    $('#todolist').append('<li><a href="/" id="delete_' + index + '">✘</a> ' + todo +'</li>');
+
+                    // Gestion de l'évènement suppression
+                    $('#delete_' + index).click(function () {
+
+                        // Envoie de la suppression de la tache au serveur, pour la propager aux autres utilisateurs
+                        socket.emit('delete_task', index);
+
+                        // Mise à jour de la todolist locale et réaffichage
+                        todolist.splice(index, 1);
+                        displayList(todolist);
+
+                        // Blocage du link
+                        return false;
+                    });
+                });
+
+                // Vidage du champ de saisie de tache et lui donne le focus
+                $('#newtodo').val('').focus();
+            }
+        </script>
+    </body>
+</html>

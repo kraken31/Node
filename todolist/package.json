@@ -1,0 +1,11 @@
+{
+    "name": "todolist",
+    "version": "0.1.0",
+    "dependencies": {
+        "express": "~4.16.2",
+        "socket.io": "~2.0.3",
+        "ent": "~2.2.0"
+    },
+    "author": "Aurélien Déjean",
+    "description": "Une super todolist en temps réel avec socket.io"
+}
